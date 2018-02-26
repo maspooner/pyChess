@@ -7,10 +7,18 @@ colors: -2=BLANK, -1=POSSIBLE_MOVE_SPACE, 0=WHITE, 1=BLACK
 4 = BISHOP
 5 = QUEEN
 6 = KING
-
-TODO:TEST a game
 """
 import copy
+
+class Piece:
+    def __init__(self, color):
+        self._color = color
+    def possible_moves(self, row, col, board):
+        pass
+
+class Pawn(Piece):
+    def __init__(self, color):
+        super(color)
 
 class Piece(object):
     def __init__(self, piece, color, row, col):
@@ -67,7 +75,7 @@ class Piece(object):
         #rows bellow
         for i in range(self.row,8):
             current_piece=board[i][self.col]
-            print "rows",current_piece
+            print("rows",current_piece)
             if current_piece is self:
                 continue
             if is_piece(board, i, self.col):
@@ -78,7 +86,7 @@ class Piece(object):
         #rows above
         for i in range(self.row,-1,-1):
             current_piece=board[i][self.col]
-            print "rows",current_piece
+            print("rows",current_piece)
             if current_piece is self:
                 continue
             if is_piece(board, i, self.col):
@@ -89,7 +97,7 @@ class Piece(object):
         #cols right
         for i in range(self.col,8):
             current_piece=board[self.row][i]
-            print "cols",current_piece
+            print("cols",current_piece)
             if current_piece is self:
                 continue
             if is_piece(board, self.row, i):
@@ -100,7 +108,7 @@ class Piece(object):
         #cols left
         for i in range(self.col,-1,-1):
             current_piece=board[self.row][i]
-            print "cols",current_piece
+            print("cols",current_piece)
             if current_piece is self:
                 continue
             if is_piece(board, self.row, i):
@@ -145,7 +153,7 @@ class Piece(object):
                 if not is_valid_position(c_row, c_col):
                     break
                 current_piece=board[c_row][c_col]
-                print direct,current_piece
+                print(direct,current_piece)
                 if current_piece is self:
                     continue
                 if is_piece(board, c_row, c_col):
@@ -231,7 +239,7 @@ class Piece(object):
         moves[:]=[move for move in moves if not (not is_valid_position(move[0], move[1]) or \
                   (is_piece(board, move[0], move[1]) and self.is_same_color(board[move[0]][move[1]]) and not is_checkmate_check) \
                    or (move[2]==False and is_piece(board, move[0], move[1])))]
-        print moves
+        print(moves)
         return moves
     def is_same_color(self, piece):
         return self.color==piece.color
@@ -240,17 +248,17 @@ class Piece(object):
 
 def print_board(board):
     lst=['A_','B_','C_','D_','E_','F_','G_','H_']
-    print '     ',
+    print('     ', end="")
     for i in lst:
-        print i,
-    print
-    print '      = = = = = = = = = = = ='
+        print(i, end="")
+    print()
+    print('= = = = = = = = = = = =')
     for i,row in enumerate(board):
-        print str(i+1)+"  ||",
+        print(str(i+1)+"  ||", end="")
         for space in row:
-            print space,
-        print
-    print
+            print(space, end="")
+        print()
+    print()
 
 def print_possibles(board, moves):
     changeable_board=copy.deepcopy(board)
@@ -299,8 +307,8 @@ def move_piece(piece, board):
             if move[0]==space[0] and move[1]==space[1]:
                 done=True
         if not done:
-            print 'Not a valid move. Press Enter.'
-            raw_input()
+            print('Not a valid move. Press Enter.')
+            input()
     #move piece
     if is_piece(board,space[0],space[1]):
         #if move captures piece
@@ -311,7 +319,7 @@ def move_piece(piece, board):
     board[piece.row][piece.col].fix_pos(piece.row, piece.col)
     board[space[0]][space[1]].fix_pos(space[0], space[1])
     
-    print space
+    print(space)
     return board[space[0]][space[1]]
 def get_piece_to_play(board, color, is_in_check):
     if is_in_check:
@@ -320,23 +328,23 @@ def get_piece_to_play(board, color, is_in_check):
     else:
         while True:
             print_board(board)
-            if color==0: print 'It\'s WHITE\'s turn!'
-            else: print 'It\'s BLACK\'s turn!'
+            if color==0: print('It\'s WHITE\'s turn!')
+            else: print('It\'s BLACK\'s turn!')
             space=get_user_input('What piece will you move?')
             piece=board[space[0]][space[1]]
             if piece.color==color:
                 if len(piece.get_possible_moves(board))>0:
                     break
                 else:
-                    print 'It can\'t move. Press Enter'
-                    raw_input()
+                    print('It can\'t move. Press Enter')
+                    input()
             else:
-                print 'Not your piece! Press Enter'
-                raw_input()
+                print('Not your piece! Press Enter')
+                input()
     return piece
 def get_user_input(message):
     while True:
-        raw=raw_input(message)
+        raw=input(message)
         letters=['A','B','C','D','E','F','G','H']
         space=[]
         try:
@@ -349,10 +357,10 @@ def get_user_input(message):
             space.insert(0,int(raw[1])-1)
             break
         except:
-            print 'Invalid input. Correct Syntax: A4\nPress Enter'
-            raw_input()
+            print('Invalid input. Correct Syntax: A4\nPress Enter')
+            input()
             continue
-    print space
+    print(space)
     return space
 def is_valid_position(row, col):
     if row>=8 or row<0 or col>=8 or col<0:
@@ -362,7 +370,7 @@ def is_checkmate(board, color):
     k_row, k_col=find_king(board, color)
     king_moves=board[k_row][k_col].get_possible_moves(board, True)
     if len(king_moves)==0: return True
-    print 'remaining:', king_moves
+    print('remaining:', king_moves)
     return len(king_moves)==0
 
 def find_king(board, color):
@@ -376,7 +384,7 @@ def is_check(board, last_moved_piece, color_of_king):
     temp_list.append(True)
     if tuple(temp_list) in moves:
         #if the king is in the piece's moveset
-        print color_of_king, 'IS IN CHECK'
+        print(color_of_king, 'IS IN CHECK')
         return True
     return False
 #main
@@ -390,8 +398,8 @@ is_p1_check=False
 is_p2_check=False
 winner=-1
 if __name__ == '__main__':
-    print '*'*50, '\nChess v1.0\nBy Matt Spooner\n'+('*'*50)
-    raw_input('Press Enter to Start')
+    print('*'*50, '\nChess v1.1\nBy Matt Spooner\n'+('*'*50))
+    input('Press Enter to Start')
     #board[5][5]=Piece(6,1,5,5)
     #board[7][2]=Piece(4,0,7,2)
     #board[6][6]=Piece(4,0,6,6)
@@ -413,5 +421,5 @@ if __name__ == '__main__':
         if is_checkmate(board,BLACK):
             winner=1
             break
-    print 'GAME END'
-    print 'WINNER IS:', winner if 'BLACK' else 'WHITE'
+    print('GAME END')
+    print('WINNER IS:', winner if 'BLACK' else 'WHITE')
