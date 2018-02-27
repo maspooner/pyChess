@@ -1,15 +1,3 @@
-"""
-colors: -2=BLANK, -1=POSSIBLE_MOVE_SPACE, 0=WHITE, 1=BLACK
-0 = EMPTY
-1 = PAWN
-2 = ROOK
-3 = KNIGHT
-4 = BISHOP
-5 = QUEEN
-6 = KING
-"""
-import copy
-
 class Piece:
     def __init__(self, color):
         self._color = color
@@ -18,8 +6,142 @@ class Piece:
 
 class Pawn(Piece):
     def __init__(self, color):
-        super(color)
+        super().__init__(color)
+    def possible_moves(self, row, col, board):
+        pass
 
+class Rook(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+    def possible_moves(self, row, col, board):
+        pass
+
+class Bishop(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+    def possible_moves(self, row, col, board):
+        pass
+
+class Knight(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+    def possible_moves(self, row, col, board):
+        pass
+
+class King(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+    def possible_moves(self, row, col, board):
+        pass
+
+class Queen(Piece):
+    def __init__(self, color):
+        super().__init__(color)
+    def possible_moves(self, row, col, board):
+        pass
+
+class Board:
+    # A board is of size 8
+    COL_HEADERS = ['A','B','C','D','E','F','G','H']
+    def __init__(self):
+        # 2D Piece array
+        self._board = [[None] * 8 for _ in range(8)]
+        for i in range(8):
+            self._board[1][i] = Pawn(True)
+            self._board[6][i] = Pawn(False)
+        for i in range(1):
+            white = i == 0
+            row = 0 if white else 7
+            self._board[row][0] = Rook(white)
+            self._board[row][1] = Bishop(white)
+            self._board[row][2] = Knight(white)
+            self._board[row][3] = King(white)
+            self._board[row][4] = Queen(white)
+            self._board[row][5] = Knight(white)
+            self._board[row][6] = Bishop(white)
+            self._board[row][7] = Rook(white)
+
+
+    def is_check_for(self, white):
+        pass
+
+    def is_checkmate_for(self, white):
+        pass
+
+    def can_pick_up(self, pos, turn):
+        pass
+
+    def get_moves_for(self, pos):
+        pass
+
+    def move(self, fr, to):
+        pass
+
+    def print_highlighed_board(self, highlights):
+        pass
+
+    def print_board(self):
+        self.print_highlighed_board([])
+
+    def __str__(self):
+        pass
+
+def print_error(err):
+    print(err)
+    print("(Press ENTER to continue)")
+    input()
+
+def get_valid_input(pred, prompt, err_message):
+    valid = False
+    while not valid:
+        read = input(prompt)
+        if pred(read):
+            valid = True
+        else:
+            print_error(err_message)
+    return read
+
+def can_parse_position(input):
+    if len(input) == 2:
+        if any(map(lambda x: x == input[0], Board.COL_HEADERS)):
+            if input[1].isdigit():
+                return True
+    return False
+
+def parse_position(strpos):
+    x = Board.COL_HEADERS.index(strpos[0])
+    y = int(strpos[1])
+    return x,y
+
+def get_valid_position(board, pred, message, err_message):
+    picked_valid = False
+    while not picked_valid:
+        board.print_board()
+        strpos = get_valid_input(can_parse_position,
+            "Input a position", "Couldn't parse position, use the form 'A3'")
+        pos = parse_position(strpos)
+        if pred(pos):
+            picked_valid = True
+        else:
+            print_error(err_message)
+    return pos
+
+def main():
+    board = Board()
+    turn = True
+    while not board.is_checkmate_for(turn):
+        pick_up = get_valid_position(board, lambda p: board.can_pick_up(p, turn), 
+            "Select a piece to move", "Can't pick up a piece there")
+        valid_moves = board.get_moves_for(pos)
+        board.print_highlighed_board(valid_moves)
+        move_to = get_valid_position(board, lambda p: p in valid_moves,
+            "Select a location to move to", "Can't move there")
+        board.move(pick_up, move_to)
+        turn = not turn
+
+if __name__ == '__main__':
+    main()
+'''
 class Piece(object):
     def __init__(self, piece, color, row, col):
         self.piece=piece
@@ -423,3 +545,4 @@ if __name__ == '__main__':
             break
     print('GAME END')
     print('WINNER IS:', winner if 'BLACK' else 'WHITE')
+    '''
