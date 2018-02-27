@@ -125,18 +125,13 @@ class King(Piece):
 class Queen(EndlessPiece):
     def __init__(self, color):
         super().__init__("Q", color)
+        # queen works as a rook-bishop combo internally
+        self._rook = Rook(color)
+        self._bishop = Bishop(color)
 
     def _list_moves(self, pos, board):
-        moves = set()
-        self._add_moves_direction(board, moves, pos, lambda x,y: (x + 1, y - 1))
-        self._add_moves_direction(board, moves, pos, lambda x,y: (x - 1, y - 1))
-        self._add_moves_direction(board, moves, pos, lambda x,y: (x - 1, y + 1))
-        self._add_moves_direction(board, moves, pos, lambda x,y: (x + 1, y + 1))
-        self._add_moves_direction(board, moves, pos, lambda x,y: (x - 1, y))
-        self._add_moves_direction(board, moves, pos, lambda x,y: (x + 1, y))
-        self._add_moves_direction(board, moves, pos, lambda x,y: (x, y - 1))
-        self._add_moves_direction(board, moves, pos, lambda x,y: (x, y + 1))
-        return moves
+        # queen has rook and bishop moves
+        return self._rook._list_moves(pos, board).union(self._bishop._list_moves(pos, board))
 
 class Board:
     # A board is of size 8
@@ -190,7 +185,6 @@ class Board:
         for y in range(8):
             print(y + 1, end=": ")
             for x in range(8):
-                # inverted
                 p = self.piece_at((x, y))
                 if (x, y) in highlights:
                     print(p.print_with_color("!") if p else "!!", end=" ")
@@ -229,16 +223,15 @@ def get_valid_input(pred, prompt, err_message):
 
 def can_parse_position(input):
     if len(input) == 2:
-        if any(map(lambda x: x == input[0], Board.COL_HEADERS)):
+        if any(map(lambda x: x == input[0].upper(), Board.COL_HEADERS)):
             if input[1].isdigit():
                 return True
     return False
 
 def parse_position(strpos):
-    x = Board.COL_HEADERS.index(strpos[0])
+    x = Board.COL_HEADERS.index(strpos[0].upper())
     # one based system
     y = int(strpos[1]) - 1
-    print(x,y)
     return x,y
 
 def get_valid_position(board, pred, message, err_message, print_board):
@@ -255,6 +248,10 @@ def get_valid_position(board, pred, message, err_message, print_board):
     return pos
 
 def main():
+    print('*' * 50)
+    print('Chess v2.0 - By Matthew Spooner')
+    print('*' * 50)
+    input('Press Enter to Start')
     board = Board()
     turn = True
     while not board.is_checkmate_for(turn):
@@ -263,11 +260,9 @@ def main():
             pick_up = get_valid_position(board, lambda p: board.can_pick_up(p, turn), 
                 "Select a piece to move", "Can't pick up a piece there",
                 lambda: board.print_board())
-            print("!!!Found ", board.piece_at(pick_up))
             valid_moves = board.get_moves_for(pick_up)
             if not valid_moves:
                 print_error("Can't move the piece!")
-        print("!!!Found valid moves", valid_moves)
         move_to = get_valid_position(board, lambda p: p in valid_moves,
             "Select a location to move to", "Can't move there",
             lambda: board.print_highlighed_board(valid_moves))
