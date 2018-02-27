@@ -159,13 +159,16 @@ class Board:
     def piece_at(self, pos):
         return self._board[pos[0]][pos[1]] if self.valid_pos(pos) else None
 
+    def contains_king(self, color):
+        return self._find_king(color) is not None
+
     def is_check_for(self, color):
         king_pos = self._find_king(color)
-        pass
-
-    def is_checkmate_for(self, color):
-        king_pos = self._find_king(color)
-        pass
+        for ppos in self._pieces_of_color(not color):
+            for move in self.get_moves_for(ppos):
+                if king_pos == move:
+                    return True
+        return False
 
     def can_pick_up(self, pos, color):
         piece = self.piece_at(pos)
@@ -195,6 +198,12 @@ class Board:
     def print_board(self):
         self.print_highlighed_board([])
 
+    def _pieces_of_color(self, color):
+        for i in range(8):
+            for j in range(8):
+                p = self.piece_at((i, j))
+                if p and p.matches(color):
+                    yield i, j
     def _set_piece(self, x, y, to):
         self._board[x][y] = to
 
@@ -206,11 +215,6 @@ class Board:
                     return i,j
         return None
 
-def print_error(err):
-    print(err)
-    #print("(Press ENTER to continue)")
-    #input()
-
 def get_valid_input(pred, prompt, err_message):
     valid = False
     while not valid:
@@ -218,7 +222,7 @@ def get_valid_input(pred, prompt, err_message):
         if pred(read):
             valid = True
         else:
-            print_error(err_message)
+            print(err_message)
     return read
 
 def can_parse_position(input):
@@ -244,7 +248,7 @@ def get_valid_position(board, pred, message, err_message, print_board):
         if pred(pos):
             picked_valid = True
         else:
-            print_error(err_message)
+            print(err_message)
     return pos
 
 def main():
@@ -254,7 +258,10 @@ def main():
     input('Press Enter to Start')
     board = Board()
     turn = True
-    while not board.is_checkmate_for(turn):
+    while board.contains_king(turn):
+        print("It's player {}'s turn!".format("1" if turn else "2"))
+        if board.is_check_for(turn):
+            print("You are in check!")
         valid_moves = set()
         while not valid_moves:
             pick_up = get_valid_position(board, lambda p: board.can_pick_up(p, turn), 
@@ -262,93 +269,14 @@ def main():
                 lambda: board.print_board())
             valid_moves = board.get_moves_for(pick_up)
             if not valid_moves:
-                print_error("Can't move the piece!")
+                print("Can't move the piece!")
         move_to = get_valid_position(board, lambda p: p in valid_moves,
             "Select a location to move to", "Can't move there",
             lambda: board.print_highlighed_board(valid_moves))
         board.move(pick_up, move_to)
         turn = not turn
-
+    print("Player {} has won!".format("2" if turn else "1"))
 if __name__ == '__main__':
+    # This game of chess has no checkmate for simplicity
+    # The game ends when the king is captured
     main()
-'''
-def get_piece_to_play(board, color, is_in_check):
-    if is_in_check:
-        k_row, k_col=find_king(board, color)
-        return board[k_row][k_col]
-    else:
-        while True:
-            print_board(board)
-            if color==0: print('It\'s WHITE\'s turn!')
-            else: print('It\'s BLACK\'s turn!')
-            space=get_user_input('What piece will you move?')
-            piece=board[space[0]][space[1]]
-            if piece.color==color:
-                if len(piece.get_possible_moves(board))>0:
-                    break
-                else:
-                    print('It can\'t move. Press Enter')
-                    input()
-            else:
-                print('Not your piece! Press Enter')
-                input()
-    return piece
-
-def is_checkmate(board, color):
-    k_row, k_col=find_king(board, color)
-    king_moves=board[k_row][k_col].get_possible_moves(board, True)
-    if len(king_moves)==0: return True
-    print('remaining:', king_moves)
-    return len(king_moves)==0
-
-def find_king(board, color):
-    for row in board:
-        for space in row:
-            if space.piece==6 and space.color==color:
-                return (space.row, space.col)
-def is_check(board, last_moved_piece, color_of_king):
-    moves=last_moved_piece.get_possible_moves(board)
-    temp_list=list(find_king(board, color_of_king))
-    temp_list.append(True)
-    if tuple(temp_list) in moves:
-        #if the king is in the piece's moveset
-        print(color_of_king, 'IS IN CHECK')
-        return True
-    return False
-#main
-board=[[Piece(0,-2,row,col) for col in range(8)] for row in range(8)]
-player1='Player 1' #WHITE
-player2='Player 2' #BLACK
-WHITE=0
-BLACK=1
-is_p1_turn=False
-is_p1_check=False
-is_p2_check=False
-winner=-1
-if __name__ == '__main__':
-    print('*'*50, '\nChess v1.1\nBy Matt Spooner\n'+('*'*50))
-    input('Press Enter to Start')
-    #board[5][5]=Piece(6,1,5,5)
-    #board[7][2]=Piece(4,0,7,2)
-    #board[6][6]=Piece(4,0,6,6)
-    #board[6][7]=Piece(2,0,6,7)
-    #print_possibles(board, board[6][7].get_possible_moves(board))
-    setup_board(board)
-    while True:
-        #TODO: put it all together
-        is_p1_turn=not is_p1_turn
-        if is_p1_turn:
-            moved_piece=move_piece(get_piece_to_play(board, WHITE, is_p1_check), board)
-            is_p2_check=is_check(board, moved_piece, BLACK)
-        else:
-            moved_piece=move_piece(get_piece_to_play(board, BLACK, is_p2_check), board)
-            is_p1_check=is_check(board, moved_piece, WHITE)
-        if is_checkmate(board, WHITE):
-            winner=0
-            break
-        if is_checkmate(board,BLACK):
-            winner=1
-            break
-    print('GAME END')
-    print('WINNER IS:', winner if 'BLACK' else 'WHITE')
-    '''
