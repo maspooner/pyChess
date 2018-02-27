@@ -1,95 +1,173 @@
 class Piece:
-    def __init__(self, color):
+    def __init__(self, sym, color):
+        self._sym = sym
         self._color = color
-    def possible_moves(self, row, col, board):
+        
+    def matches(self, other_color):
+        return self._color == other_color
+
+    def possible_moves(self, pos, board):
+        return set(filter(board.valid_pos, self._list_moves(pos, board)))
+
+    def checkable(self):
+        return False
+
+    def on_move(self):
         pass
+
+    def print_with_color(self, color):
+        return self._sym + color
+
+    def __str__(self):
+        return self.print_with_color("+" if self._color else "-")
 
 class Pawn(Piece):
     def __init__(self, color):
-        super().__init__(color)
-    def possible_moves(self, row, col, board):
-        pass
+        super().__init__("P", color)
+        self._has_moved = False
+
+    def _list_moves(self, pos, board):
+        x,y = pos
+        moves = set()
+        direction = 1 if self._color else -1
+        onepos = x, y + direction
+        twopos = x, y + 2 * direction
+        # empty 1 space out
+        if not board.piece_at(onepos):
+            moves.add(onepos)
+            # not moved yet and open two spaces out
+            if not self._has_moved and not board.piece_at(twopos):
+                moves.add(twopos)
+        lc = x + 1, y + direction
+        lcp = board.piece_at(lc)
+        rc = x - 1, y + direction
+        rcp = board.piece_at(rc)
+        # capturable
+        if lcp and not lcp.matches(self._color):
+            moves.add(lc)
+        if rcp and not rcp.matches(self._color):
+            moves.add(rc)
+        return moves
+
+    def on_move(self):
+        self._has_moved = True
+
 
 class Rook(Piece):
     def __init__(self, color):
-        super().__init__(color)
-    def possible_moves(self, row, col, board):
+        super().__init__("R", color)
+
+    def _list_moves(self, pos, board):
         pass
 
 class Bishop(Piece):
     def __init__(self, color):
-        super().__init__(color)
-    def possible_moves(self, row, col, board):
+        super().__init__("B", color)
+    def _list_moves(self, pos, board):
         pass
 
 class Knight(Piece):
     def __init__(self, color):
-        super().__init__(color)
-    def possible_moves(self, row, col, board):
+        super().__init__("N", color)
+
+    def _list_moves(self, pos, board):
         pass
 
 class King(Piece):
     def __init__(self, color):
-        super().__init__(color)
-    def possible_moves(self, row, col, board):
+        super().__init__("K", color)
+
+    def _list_moves(self, pos, board):
         pass
+
+    def checkable(self):
+        return True
 
 class Queen(Piece):
     def __init__(self, color):
-        super().__init__(color)
-    def possible_moves(self, row, col, board):
+        super().__init__("Q", color)
+
+    def _list_moves(self, pos, board):
         pass
 
 class Board:
     # A board is of size 8
     COL_HEADERS = ['A','B','C','D','E','F','G','H']
     def __init__(self):
-        # 2D Piece array
+        # 2D Piece array = board[x][y]
         self._board = [[None] * 8 for _ in range(8)]
         for i in range(8):
-            self._board[1][i] = Pawn(True)
-            self._board[6][i] = Pawn(False)
-        for i in range(1):
-            white = i == 0
-            row = 0 if white else 7
-            self._board[row][0] = Rook(white)
-            self._board[row][1] = Bishop(white)
-            self._board[row][2] = Knight(white)
-            self._board[row][3] = King(white)
-            self._board[row][4] = Queen(white)
-            self._board[row][5] = Knight(white)
-            self._board[row][6] = Bishop(white)
-            self._board[row][7] = Rook(white)
+            self._set_piece(i, 1, Pawn(True))
+            self._set_piece(i, 6, Pawn(False))
+        for i in range(2):
+            color = i == 0
+            row = 0 if color else 7
+            self._set_piece(0, row, Rook(color))
+            self._set_piece(1, row, Knight(color))
+            self._set_piece(2, row, Bishop(color))
+            self._set_piece(3, row, King(color))
+            self._set_piece(4, row, Queen(color))
+            self._set_piece(5, row, Bishop(color))
+            self._set_piece(6, row, Knight(color))
+            self._set_piece(7, row, Rook(color))
 
+    def valid_pos(self, pos):
+        return pos[0] >= 0 and pos[0] < 8 and pos[1] >= 0 and pos[1] < 8
+    def piece_at(self, pos):
+        return self._board[pos[0]][pos[1]] if self.valid_pos(pos) else None
 
-    def is_check_for(self, white):
+    def is_check_for(self, color):
+        king_pos = self._find_king(color)
         pass
 
-    def is_checkmate_for(self, white):
+    def is_checkmate_for(self, color):
+        king_pos = self._find_king(color)
         pass
 
-    def can_pick_up(self, pos, turn):
-        pass
+    def can_pick_up(self, pos, color):
+        piece = self.piece_at(pos)
+        return piece.matches(color) if piece else False
 
     def get_moves_for(self, pos):
-        pass
+        return self.piece_at(pos).possible_moves(pos, self)
 
     def move(self, fr, to):
-        pass
+        p = self.piece_at(fr)
+        self._set_piece(to[0], to[1], p)
+        self._set_piece(fr[0], fr[1], None)
+        p.on_move()
 
     def print_highlighed_board(self, highlights):
-        pass
+        print("  ", "  ".join(Board.COL_HEADERS))
+        for y in range(8):
+            print(y + 1, end=": ")
+            for x in range(8):
+                # inverted
+                p = self.piece_at((x, y))
+                if (x, y) in highlights:
+                    print(p.print_with_color("!") if p else "!!", end=" ")
+                else:
+                    print(p if p else "  ", end=" ")
+            print()
 
     def print_board(self):
         self.print_highlighed_board([])
 
-    def __str__(self):
-        pass
+    def _set_piece(self, x, y, to):
+        self._board[x][y] = to
+
+    def _find_king(self, color):
+        for i in range(8):
+            for j in range(8):
+                p = self.piece_at((i, j))
+                if p and p.matches(color) and p.checkable():
+                    return i,j
+        return None
 
 def print_error(err):
     print(err)
-    print("(Press ENTER to continue)")
-    input()
+    #print("(Press ENTER to continue)")
+    #input()
 
 def get_valid_input(pred, prompt, err_message):
     valid = False
@@ -110,15 +188,17 @@ def can_parse_position(input):
 
 def parse_position(strpos):
     x = Board.COL_HEADERS.index(strpos[0])
-    y = int(strpos[1])
+    # one based system
+    y = int(strpos[1]) - 1
+    print(x,y)
     return x,y
 
-def get_valid_position(board, pred, message, err_message):
+def get_valid_position(board, pred, message, err_message, print_board):
     picked_valid = False
     while not picked_valid:
-        board.print_board()
+        print_board()
         strpos = get_valid_input(can_parse_position,
-            "Input a position", "Couldn't parse position, use the form 'A3'")
+            "Input a position: ", "Couldn't parse position, use the form 'A3'")
         pos = parse_position(strpos)
         if pred(pos):
             picked_valid = True
@@ -130,12 +210,19 @@ def main():
     board = Board()
     turn = True
     while not board.is_checkmate_for(turn):
-        pick_up = get_valid_position(board, lambda p: board.can_pick_up(p, turn), 
-            "Select a piece to move", "Can't pick up a piece there")
-        valid_moves = board.get_moves_for(pos)
-        board.print_highlighed_board(valid_moves)
+        valid_moves = set()
+        while not valid_moves:
+            pick_up = get_valid_position(board, lambda p: board.can_pick_up(p, turn), 
+                "Select a piece to move", "Can't pick up a piece there",
+                lambda: board.print_board())
+            print("!!!Found ", board.piece_at(pick_up))
+            valid_moves = board.get_moves_for(pick_up)
+            if not valid_moves:
+                print_error("Can't move the piece!")
+        print("!!!Found valid moves", valid_moves)
         move_to = get_valid_position(board, lambda p: p in valid_moves,
-            "Select a location to move to", "Can't move there")
+            "Select a location to move to", "Can't move there",
+            lambda: board.print_highlighed_board(valid_moves))
         board.move(pick_up, move_to)
         turn = not turn
 
